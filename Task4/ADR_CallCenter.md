@@ -162,3 +162,4 @@ gantt
     Миграция на Kafka               :kafka, 2024-10-01, 30d
     Real-time обновления            :realtime, after kafka, 30d
     Расширенный мониторинг          :monitor, after realtime, 15d
+```
