@@ -1,0 +1,52 @@
+@startuml Container Diagram
+!include <C4/C4_Container>
+
+title Диаграмма контейнеров - Детализация интернет-банка и АБС
+
+Person(клиент, "Клиент", "Подает заявку на депозит")
+
+System_Boundary(интернет_банк_граница, "Интернет-банк") {
+    Container(web_ui, "Web UI", "ASP.NET MVC 4.5", "Пользовательский интерфейс")
+    Container(api_gateway, "API Gateway", ".NET Web API", "Единая точка входа")
+    Container(deposit_service, "Deposit Service", ".NET Core", "Обработка депозитных заявок")
+    Container(rate_service, "Rate Service", ".NET Core", "Расчет персонализированных ставок")
+    Container(redis, "Redis", "In-memory cache", "Кэширование справочников и сессий")
+    Container(ms_sql, "MS SQL Database", "SQL Database", "Хранение данных заявок")
+}
+
+System_Boundary(абс_граница, "АБС") {
+    Container(абс_ядро, "Core Banking", "Delphi", "Основной функционал АБС")
+    Container(абс_депозиты, "Deposit Module", "PL/SQL", "Управление депозитными продуктами")
+    Container(oracle_db, "Oracle Database", "Oracle", "Основное хранилище данных")
+    Container(абс_адаптер, "Integration Adapter", "Java", "Адаптер для внешних систем")
+}
+
+System(кц_система, "Система кол-центра", "Java Spring Boot")
+System(смс_шлюз, "СМС-шлюз", "Отправка уведомлений")
+System(работа_с_ставками, "Система управления ставками", "Управление депозитными ставками")
+
+' Связи интернет-банка
+Rel(клиент, web_ui, "Взаимодействует с UI")
+Rel(web_ui, api_gateway, "HTTP запросы")
+Rel(api_gateway, deposit_service, "Обработка заявок")
+Rel(api_gateway, rate_service, "Запрос ставок")
+Rel(rate_service, redis, "Кэширование данных")
+Rel(deposit_service, ms_sql, "Сохранение заявок")
+Rel(deposit_service, redis, "Кэширование статусов")
+
+' Интеграции с внешними системами
+Rel(deposit_service, абс_адаптер, "Асинхронная передача заявок (RabbitMQ)")
+Rel(rate_service, работа_с_ставками, "Запрос актуальных ставок (REST)")
+Rel(deposit_service, смс_шлюз, "Отправка SMS (HTTP API)")
+Rel(api_gateway, кц_система, "Передача заявок новых клиентов")
+
+' Внутренние связи АБС
+Rel(абс_адаптер, абс_ядро, "Внутренний API")
+Rel(абс_ядро, абс_депозиты, "Вызов процедур")
+Rel(абс_депозиты, oracle_db, "Работа с данными")
+Rel(абс_адаптер, смс_шлюз, "Отправка уведомлений (HTTP)")
+
+' Внешние интеграции АБС
+Rel(абс_адаптер, кц_система, "Синхронизация данных (REST)")
+
+@enduml
