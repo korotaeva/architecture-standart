@@ -1,0 +1,29 @@
+@startuml Контекстная диаграмма C4: Детализированная версия
+!include <C4/C4_Context>
+
+title Контекстная диаграмма: Сервис депозитных ставок с детализацией протоколов
+
+Person(admin, "Администратор АБС", "Обновляет ставки в системе")
+Person(bank_agent, "Менеджер внутреннего КЦ", "Консультирует клиентов по телефону")
+Person(partner_agent, "Менеджер партнерского КЦ", "Консультирует клиентов партнера")
+
+System(ABS, "АБС Банка", "Основная банковская система\n- Хранит актуальные ставки\n- Генерирует экспортные файлы")
+System(deposit_service, "Сервис депозитных ставок", "Буферный сервис для предоставления ставок\n- REST API для внутренних систем\n- SFTP для внешних партнеров")
+System(partner_system, "Система партнерского КЦ", "Локальная система партнера\n- Принимает файлы по SFTP\n- Обновляет базу данных")
+
+' Основные взаимодействия
+Rel(admin, ABS, "1. Обновление депозитных ставок", "UI/Web interface")
+Rel(ABS, deposit_service, "2.1 Выгрузка данных через API", "REST/JSON\nЕжечасное обновление")
+Rel(ABS, deposit_service, "2.2 Генерация файлов для партнера", "SFTP transfer\nCSV/XML форматы")
+
+Rel(deposit_service, bank_agent, "3.1 Предоставление ставок в CRM", "REST API\nРеальное время")
+Rel(deposit_service, partner_system, "3.2 Доставка файлов партнеру", "SFTP pull/push")
+
+Rel(partner_system, partner_agent, "4. Отображение ставок оператору", "Web interface")
+Rel(bank_agent, deposit_service, "5. Запрос актуальных ставок", "API calls")
+
+' Дополнительные взаимодействия
+Rel_R(admin, deposit_service, "6. Мониторинг и управление", "Admin UI")
+Rel_U(partner_system, deposit_service, "7. Подтверждение получения", "SFTP acknowledgements")
+
+@enduml
